@@ -36,7 +36,7 @@ export default function VerifyEmailPage() {
             <h1 className="text-3xl font-bold mb-4">Verify Your Email</h1>
             <p className="mb-6 text-center">
                 Check your email inbox and click the verification link.<br />
-                Didn't get it? Click below to resend.
+                Did not get it? Click below to resend.
             </p>
 
             <button
