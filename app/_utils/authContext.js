@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { auth } from "./firebase";
 import {
-    GithubAuthProvider,
+    GoogleAuthProvider,
     signInWithPopup,
     signOut,
     onAuthStateChanged,
@@ -14,8 +14,8 @@ const AuthContext = createContext();
 export const AuthContextProvider = ({ children }) => {
     const [user, setUser] = useState(null);
 
-    const gitHubSignIn = () => {
-        const provider = new GithubAuthProvider();
+    const googleSignIn = () => {
+        const provider = new GoogleAuthProvider();
         return signInWithPopup(auth, provider);
     };
 
@@ -31,7 +31,7 @@ export const AuthContextProvider = ({ children }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, gitHubSignIn, firebaseSignOut }}>
+        <AuthContext.Provider value={{ user, googleSignIn, firebaseSignOut }}>
             {children}
         </AuthContext.Provider>
     );
