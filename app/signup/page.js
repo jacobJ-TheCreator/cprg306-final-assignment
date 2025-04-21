@@ -1,44 +1,96 @@
 "use client";
 
 import { useUserAuth } from "../_utils/authContext";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
     const { emailSignUp } = useUserAuth();
     const router = useRouter();
 
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        phone: "",
+    });
+
+    const handleChange = (e) => {
+        setFormData((prev) => ({
+            ...prev,
+            [e.target.name]: e.target.value,
+        }));
+    };
 
     const handleSignUp = async (e) => {
         e.preventDefault();
-
         try {
-            await emailSignUp(email, password, firstName, lastName, phone);
-
-            alert("Account created! Please verify your email before logging in.");
-
-            router.push("/verifyEmail"); // ✅ IMMEDIATELY push to /verifyEmail after signup
+            await emailSignUp(
+                formData.email,
+                formData.password,
+                formData.firstName,
+                formData.lastName,
+                formData.phone
+            );
+            router.push("/login"); // ➔ after signup, redirect to login
         } catch (error) {
-            console.error("Signup Error:", error.message);
             alert(error.message);
         }
     };
 
     return (
         <main className="flex flex-col items-center p-8">
-            <h1 className="text-3xl font-bold mb-6">Create Your ZenBudget Account</h1>
+            <h1 className="text-3xl font-bold mb-6">Sign Up</h1>
             <form onSubmit={handleSignUp} className="flex flex-col gap-4 w-full max-w-sm">
-                <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="border p-2 rounded" />
-                <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="border p-2 rounded" />
-                <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className="border p-2 rounded" />
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required className="border p-2 rounded" />
-                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="border p-2 rounded" />
-                <button type="submit" className="bg-green-600 text-white p-2 rounded hover:bg-green-700">Create Account</button>
+                <input
+                    type="text"
+                    name="firstName"
+                    placeholder="First Name"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    className="border p-2 rounded"
+                />
+                <input
+                    type="text"
+                    name="lastName"
+                    placeholder="Last Name"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    className="border p-2 rounded"
+                />
+                <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Phone Number"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    className="border p-2 rounded"
+                />
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="border p-2 rounded"
+                />
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="border p-2 rounded"
+                />
+                <button type="submit" className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+                    Sign Up
+                </button>
             </form>
         </main>
     );
