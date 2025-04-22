@@ -6,7 +6,6 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
-    sendEmailVerification,
     GoogleAuthProvider,
     signInWithPopup,
     onAuthStateChanged,
@@ -34,7 +33,6 @@ export const AuthContextProvider = ({ children }) => {
             email,
         });
 
-        await sendEmailVerification(userCredential.user);
         return userCredential;
     };
 
