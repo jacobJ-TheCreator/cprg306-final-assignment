@@ -3,18 +3,26 @@
 import { useState, useEffect } from "react";
 import { useUserAuth } from "@/app/_utils/authContext";
 import { db } from "@/app/_utils/firebase";
-import {
-    collection,
-    addDoc,
-    query,
-    where,
-    orderBy,
-    getDocs,
-} from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, orderBy } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-const COLORS = ["#00C49F", "#FF8042", "#FFBB28", "#8884d8", "#FF6666"];
+const COLORS = ["#00C49F", "#FF8042", "#FFBB28", "#8884d8", "#FF6666", "#4ade80", "#facc15"];
+
+const incomeCategories = ["Job", "Investments", "Tax refunds", "MISC"];
+const expenseCategories = ["Mortgage/Rent", "Groceries", "Entertainment", "Insurance", "Gas", "MISC"];
+
+const categoryColors = {
+    "Job": "#4ade80",
+    "Investments": "#60a5fa",
+    "Tax refunds": "#fbbf24",
+    "MISC": "#a78bfa",
+    "Mortgage/Rent": "#f87171",
+    "Groceries": "#34d399",
+    "Entertainment": "#facc15",
+    "Insurance": "#60a5fa",
+    "Gas": "#fb923c",
+};
 
 export default function SignedInPage() {
     const { user, profile, firebaseSignOut } = useUserAuth();
@@ -36,11 +44,7 @@ export default function SignedInPage() {
 
     const fetchTransactions = async () => {
         if (!user) return;
-        const q = query(
-            collection(db, "transactions"),
-            where("userId", "==", user.uid),
-            orderBy("timestamp", "desc")
-        );
+        const q = query(collection(db, "transactions"), where("userId", "==", user.uid), orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setTransactions(data);
@@ -62,22 +66,14 @@ export default function SignedInPage() {
         fetchTransactions();
     };
 
-    const income = transactions
-        .filter((t) => t.type === "income")
-        .reduce((sum, t) => sum + t.amount, 0);
-
-    const expenses = transactions
-        .filter((t) => t.type === "expense")
-        .reduce((sum, t) => sum + t.amount, 0);
-
+    const income = transactions.filter(t => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
+    const expenses = transactions.filter(t => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
     const balance = income - expenses;
 
-    const expenseByCategory = transactions
-        .filter((t) => t.type === "expense")
-        .reduce((acc, curr) => {
-            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
-            return acc;
-        }, {});
+    const expenseByCategory = transactions.filter(t => t.type === "expense").reduce((acc, curr) => {
+        acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+        return acc;
+    }, {});
 
     const pieData = Object.keys(expenseByCategory).map((cat) => ({
         name: cat,
@@ -108,15 +104,15 @@ export default function SignedInPage() {
             <div className="grid grid-cols-3 gap-4 mb-8">
                 <div className="bg-white shadow p-4 rounded text-center">
                     <h2 className="text-green-600 font-semibold">Income</h2>
-                    <p className="text-gray-400 text-2xl">${income.toFixed(2)}</p>
+                    <p className="text-black text-2xl">${income.toFixed(2)}</p>
                 </div>
                 <div className="bg-white shadow p-4 rounded text-center">
                     <h2 className="text-red-500 font-semibold">Expenses</h2>
-                    <p className="text-gray-400 text-2xl">${expenses.toFixed(2)}</p>
+                    <p className="text-black text-2xl">${expenses.toFixed(2)}</p>
                 </div>
                 <div className="bg-white shadow p-4 rounded text-center">
-                    <h2 className="text-gray-700 font-semibold">Balance</h2>
-                    <p className="text-gray-400 text-2xl">${balance.toFixed(2)}</p>
+                    <h2 className="text-black font-semibold">Balance</h2>
+                    <p className="text-black text-2xl">${balance.toFixed(2)}</p>
                 </div>
             </div>
 
@@ -126,7 +122,7 @@ export default function SignedInPage() {
                         setShowIncomeForm(true);
                         setShowExpenseForm(false);
                     }}
-                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                    className="bg-green-500 text-black px-4 py-2 rounded hover:bg-green-600"
                 >
                     Add Income
                 </button>
@@ -135,7 +131,7 @@ export default function SignedInPage() {
                         setShowExpenseForm(true);
                         setShowIncomeForm(false);
                     }}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    className="bg-red-500 text-black px-4 py-2 rounded hover:bg-red-600"
                 >
                     Add Expense
                 </button>
@@ -153,26 +149,26 @@ export default function SignedInPage() {
                         onChange={(e) => setAmount(e.target.value)}
                         className="border p-2 rounded mb-4 w-full"
                     />
-                    <input
-                        type="text"
-                        placeholder="Category"
+                    <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
                         className="border p-2 rounded mb-4 w-full"
-                    />
+                    >
+                        <option value="">Select Category</option>
+                        {(showIncomeForm ? incomeCategories : expenseCategories).map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
                     <button
-                        onClick={() =>
-                            handleAddTransaction(showIncomeForm ? "income" : "expense")
-                        }
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+                        onClick={() => handleAddTransaction(showIncomeForm ? "income" : "expense")}
+                        className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 w-full"
                     >
                         Submit
                     </button>
                 </div>
             )}
 
-            {/* Graphs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white p-6 rounded shadow">
                     <h2 className="text-green-900 font-semibold mb-4">Expenses by Category</h2>
                     {pieData.length > 0 ? (
@@ -183,18 +179,17 @@ export default function SignedInPage() {
                                     dataKey="value"
                                     nameKey="name"
                                     outerRadius={100}
-                                    fill="#82ca9d"
                                     label
                                 >
                                     {pieData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell-${index}`} fill={categoryColors[entry.name] || COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip />
                             </PieChart>
                         </ResponsiveContainer>
                     ) : (
-                        <p className="text-center text-gray-400">No expense data</p>
+                        <p className="text-center text-black">No expense data</p>
                     )}
                 </div>
 
@@ -202,15 +197,12 @@ export default function SignedInPage() {
                     <h2 className="text-green-900 font-semibold mb-4">Income vs Expenses</h2>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={barData}>
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
+                            <XAxis dataKey="name" stroke="black" />
+                            <YAxis stroke="black" />
+                            <Tooltip contentStyle={{ backgroundColor: "white", color: "black", border: "1px solid black" }} />
                             <Bar dataKey="amount">
                                 {barData.map((entry, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={entry.name === "Income" ? "#00C49F" : "#FF6666"} // ✅ Green for Income, Red for Expenses
-                                    />
+                                    <Cell key={`cell-bar-${index}`} fill={entry.name === "Income" ? "#4ade80" : "#f87171"} />
                                 ))}
                             </Bar>
                         </BarChart>
@@ -219,38 +211,35 @@ export default function SignedInPage() {
                 </div>
             </div>
 
-            {/* Recent Transactions */}
-            <div className="bg-white p-6 rounded shadow mt-10">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-green-900 font-semibold text-lg">Recent Transactions</h2>
-                    <button
-                        onClick={() => router.push("/transactions")}
-                        className="text-blue-600 hover:underline text-sm"
-                    >
-                        See All
-                    </button>
-
+            <div className="bg-white p-6 rounded shadow mt-8">
+                <h2 className="text-green-900 font-semibold mb-4">Recent Transactions</h2>
+                <div className="space-y-2">
+                    {transactions.slice(0, 5).map((transaction) => (
+                        <div key={transaction.id} className="flex justify-between">
+                            <div className="flex items-center gap-2">
+                                <span
+                                    className="px-2 py-1 rounded text-xs font-semibold"
+                                    style={{ backgroundColor: categoryColors[transaction.category] || "#ddd", color: "#000" }}
+                                >
+                                    {transaction.category}
+                                </span>
+                                <span className={`${transaction.type === "income" ? "text-green-600" : "text-red-500"} font-semibold`}>
+                                    {transaction.type === "income" ? "+" : "-"}${transaction.amount.toFixed(2)}
+                                </span>
+                            </div>
+                            <span className="text-black text-sm">
+                                {new Date(transaction.timestamp?.seconds * 1000).toLocaleString()}
+                            </span>
+                        </div>
+                    ))}
                 </div>
-                <ul className="divide-y divide-gray-200">
-                    {transactions
-                        .sort((a, b) => b.timestamp?.toDate() - a.timestamp?.toDate()) // newest first
-                        .slice(0, 5)
-                        .map((t, index) => (
-                            <li key={index} className="py-3 flex justify-between items-center">
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-800">{t.category}</p>
-                                    <p className="text-xs text-gray-400">
-                                        {t.timestamp?.toDate().toLocaleDateString()}
-                                    </p>
-                                </div>
-                                <div className={`${t.type === "income" ? "text-green-500" : "text-red-500"} font-semibold`}>
-                                    {t.type === "income" ? "+" : "-"}${t.amount.toFixed(2)}
-                                </div>
-                            </li>
-                        ))}
-                </ul>
+                <button
+                    onClick={() => router.push("/transactions")}
+                    className="mt-4 text-green-700 hover:underline"
+                >
+                    See all transactions →
+                </button>
             </div>
-
         </main>
     );
 }
