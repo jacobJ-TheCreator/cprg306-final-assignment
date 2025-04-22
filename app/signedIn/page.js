@@ -8,6 +8,7 @@ import {
     addDoc,
     query,
     where,
+    orderBy,
     getDocs,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -35,9 +36,13 @@ export default function SignedInPage() {
 
     const fetchTransactions = async () => {
         if (!user) return;
-        const q = query(collection(db, "transactions"), where("userId", "==", user.uid));
+        const q = query(
+            collection(db, "transactions"),
+            where("userId", "==", user.uid),
+            orderBy("timestamp", "desc")
+        );
         const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => doc.data());
+        const data = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setTransactions(data);
     };
 
@@ -156,7 +161,9 @@ export default function SignedInPage() {
                         className="border p-2 rounded mb-4 w-full"
                     />
                     <button
-                        onClick={() => handleAddTransaction(showIncomeForm ? "income" : "expense")}
+                        onClick={() =>
+                            handleAddTransaction(showIncomeForm ? "income" : "expense")
+                        }
                         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
                     >
                         Submit
@@ -164,7 +171,8 @@ export default function SignedInPage() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Graphs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <div className="bg-white p-6 rounded shadow">
                     <h2 className="text-green-900 font-semibold mb-4">Expenses by Category</h2>
                     {pieData.length > 0 ? (
@@ -197,11 +205,52 @@ export default function SignedInPage() {
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="amount" fill="#82ca9d" />
+                            <Bar dataKey="amount">
+                                {barData.map((entry, index) => (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={entry.name === "Income" ? "#00C49F" : "#FF6666"} // ✅ Green for Income, Red for Expenses
+                                    />
+                                ))}
+                            </Bar>
                         </BarChart>
                     </ResponsiveContainer>
+
                 </div>
             </div>
+
+            {/* Recent Transactions */}
+            <div className="bg-white p-6 rounded shadow mt-10">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-green-900 font-semibold text-lg">Recent Transactions</h2>
+                    <button
+                        onClick={() => router.push("/transactions")}
+                        className="text-blue-600 hover:underline text-sm"
+                    >
+                        See All
+                    </button>
+
+                </div>
+                <ul className="divide-y divide-gray-200">
+                    {transactions
+                        .sort((a, b) => b.timestamp?.toDate() - a.timestamp?.toDate()) // newest first
+                        .slice(0, 5)
+                        .map((t, index) => (
+                            <li key={index} className="py-3 flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-800">{t.category}</p>
+                                    <p className="text-xs text-gray-400">
+                                        {t.timestamp?.toDate().toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <div className={`${t.type === "income" ? "text-green-500" : "text-red-500"} font-semibold`}>
+                                    {t.type === "income" ? "+" : "-"}${t.amount.toFixed(2)}
+                                </div>
+                            </li>
+                        ))}
+                </ul>
+            </div>
+
         </main>
     );
 }
