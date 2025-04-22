@@ -3,25 +3,44 @@
 import { useState, useEffect } from "react";
 import { useUserAuth } from "@/app/_utils/authContext";
 import { db } from "@/app/_utils/firebase";
-import { collection, addDoc, query, where, getDocs, orderBy } from "firebase/firestore";
+import {
+    collection,
+    addDoc,
+    query,
+    where,
+    getDocs,
+    orderBy,
+    deleteDoc,
+    doc,
+    updateDoc,
+} from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+    PieChart,
+    Pie,
+    Cell,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts";
 
 const COLORS = ["#00C49F", "#FF8042", "#FFBB28", "#8884d8", "#FF6666", "#4ade80", "#facc15"];
-
 const incomeCategories = ["Job", "Investments", "Tax refunds", "MISC"];
 const expenseCategories = ["Mortgage/Rent", "Groceries", "Entertainment", "Insurance", "Gas", "MISC"];
 
 const categoryColors = {
-    "Job": "#4ade80",
-    "Investments": "#60a5fa",
+    Job: "#4ade80",
+    Investments: "#60a5fa",
     "Tax refunds": "#fbbf24",
-    "MISC": "#a78bfa",
+    MISC: "#a78bfa",
     "Mortgage/Rent": "#f87171",
-    "Groceries": "#34d399",
-    "Entertainment": "#facc15",
-    "Insurance": "#60a5fa",
-    "Gas": "#fb923c",
+    Groceries: "#34d399",
+    Entertainment: "#facc15",
+    Insurance: "#60a5fa",
+    Gas: "#fb923c",
 };
 
 export default function SignedInPage() {
@@ -33,36 +52,63 @@ export default function SignedInPage() {
     const [showExpenseForm, setShowExpenseForm] = useState(false);
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("");
+    const [editingTransaction, setEditingTransaction] = useState(null);
 
     useEffect(() => {
-        if (!user) {
-            router.push("/login");
-        } else {
-            fetchTransactions();
-        }
+        if (!user) router.push("/login");
+        else fetchTransactions();
     }, [user]);
 
     const fetchTransactions = async () => {
-        if (!user) return;
         const q = query(collection(db, "transactions"), where("userId", "==", user.uid), orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setTransactions(data);
     };
 
-    const handleAddTransaction = async (type) => {
+    const handleAddOrUpdate = async (type) => {
         if (!amount || !category) return;
-        await addDoc(collection(db, "transactions"), {
-            userId: user.uid,
-            type,
-            amount: parseFloat(amount),
-            category,
-            timestamp: new Date(),
-        });
+
+        if (editingTransaction) {
+            const docRef = doc(db, "transactions", editingTransaction.id);
+            await updateDoc(docRef, {
+                amount: parseFloat(amount),
+                category,
+                timestamp: new Date(),
+            });
+        } else {
+            await addDoc(collection(db, "transactions"), {
+                userId: user.uid,
+                type,
+                amount: parseFloat(amount),
+                category,
+                timestamp: new Date(),
+            });
+        }
+
         setAmount("");
         setCategory("");
         setShowIncomeForm(false);
         setShowExpenseForm(false);
+        setEditingTransaction(null);
+        fetchTransactions();
+    };
+
+    const handleEdit = (transaction) => {
+        setEditingTransaction(transaction);
+        setAmount(transaction.amount);
+        setCategory(transaction.category);
+        if (transaction.type === "income") {
+            setShowIncomeForm(true);
+            setShowExpenseForm(false);
+        } else {
+            setShowExpenseForm(true);
+            setShowIncomeForm(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        await deleteDoc(doc(db, "transactions", id));
         fetchTransactions();
     };
 
@@ -90,13 +136,8 @@ export default function SignedInPage() {
     return (
         <main className="min-h-screen bg-gradient-to-b from-green-50 to-white p-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-green-900">
-                    Welcome, {profile.firstName} 👋
-                </h1>
-                <button
-                    onClick={() => firebaseSignOut().then(() => router.push("/"))}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                >
+                <h1 className="text-3xl font-bold text-green-900">Welcome, {profile.firstName} 👋</h1>
+                <button onClick={() => firebaseSignOut().then(() => router.push("/"))} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                     Sign Out
                 </button>
             </div>
@@ -117,22 +158,10 @@ export default function SignedInPage() {
             </div>
 
             <div className="flex gap-4 mb-6">
-                <button
-                    onClick={() => {
-                        setShowIncomeForm(true);
-                        setShowExpenseForm(false);
-                    }}
-                    className="bg-green-500 text-black px-4 py-2 rounded hover:bg-green-600"
-                >
+                <button onClick={() => { setShowIncomeForm(true); setShowExpenseForm(false); setEditingTransaction(null); }} className="bg-green-500 text-black px-4 py-2 rounded hover:bg-green-600">
                     Add Income
                 </button>
-                <button
-                    onClick={() => {
-                        setShowExpenseForm(true);
-                        setShowIncomeForm(false);
-                    }}
-                    className="bg-red-500 text-black px-4 py-2 rounded hover:bg-red-600"
-                >
+                <button onClick={() => { setShowExpenseForm(true); setShowIncomeForm(false); setEditingTransaction(null); }} className="bg-red-500 text-black px-4 py-2 rounded hover:bg-red-600">
                     Add Expense
                 </button>
             </div>
@@ -140,30 +169,17 @@ export default function SignedInPage() {
             {(showIncomeForm || showExpenseForm) && (
                 <div className="bg-white p-6 rounded shadow mb-8">
                     <h3 className="text-lg font-semibold mb-4">
-                        {showIncomeForm ? "Add Income" : "Add Expense"}
+                        {editingTransaction ? "Edit Transaction" : showIncomeForm ? "Add Income" : "Add Expense"}
                     </h3>
-                    <input
-                        type="number"
-                        placeholder="Amount"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="border p-2 rounded mb-4 w-full"
-                    />
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="border p-2 rounded mb-4 w-full"
-                    >
+                    <input type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} className="border p-2 rounded mb-4 w-full" />
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="border p-2 rounded mb-4 w-full">
                         <option value="">Select Category</option>
                         {(showIncomeForm ? incomeCategories : expenseCategories).map((cat) => (
                             <option key={cat} value={cat}>{cat}</option>
                         ))}
                     </select>
-                    <button
-                        onClick={() => handleAddTransaction(showIncomeForm ? "income" : "expense")}
-                        className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 w-full"
-                    >
-                        Submit
+                    <button onClick={() => handleAddOrUpdate(showIncomeForm ? "income" : "expense")} className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 w-full">
+                        {editingTransaction ? "Update" : "Submit"}
                     </button>
                 </div>
             )}
@@ -174,13 +190,7 @@ export default function SignedInPage() {
                     {pieData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
-                                <Pie
-                                    data={pieData}
-                                    dataKey="value"
-                                    nameKey="name"
-                                    outerRadius={100}
-                                    label
-                                >
+                                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={100} label>
                                     {pieData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={categoryColors[entry.name] || COLORS[index % COLORS.length]} />
                                     ))}
@@ -188,9 +198,7 @@ export default function SignedInPage() {
                                 <Tooltip />
                             </PieChart>
                         </ResponsiveContainer>
-                    ) : (
-                        <p className="text-center text-black">No expense data</p>
-                    )}
+                    ) : <p className="text-center text-black">No expense data</p>}
                 </div>
 
                 <div className="bg-white p-6 rounded shadow">
@@ -202,12 +210,11 @@ export default function SignedInPage() {
                             <Tooltip contentStyle={{ backgroundColor: "white", color: "black", border: "1px solid black" }} />
                             <Bar dataKey="amount">
                                 {barData.map((entry, index) => (
-                                    <Cell key={`cell-bar-${index}`} fill={entry.name === "Income" ? "#4ade80" : "#f87171"} />
+                                    <Cell key={`bar-${index}`} fill={entry.name === "Income" ? "#4ade80" : "#f87171"} />
                                 ))}
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
-
                 </div>
             </div>
 
@@ -215,28 +222,24 @@ export default function SignedInPage() {
                 <h2 className="text-green-900 font-semibold mb-4">Recent Transactions</h2>
                 <div className="space-y-2">
                     {transactions.slice(0, 5).map((transaction) => (
-                        <div key={transaction.id} className="flex justify-between">
+                        <div key={transaction.id} className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                                <span
-                                    className="px-2 py-1 rounded text-xs font-semibold"
-                                    style={{ backgroundColor: categoryColors[transaction.category] || "#ddd", color: "#000" }}
-                                >
+                                <span className="px-2 py-1 rounded text-xs font-semibold" style={{ backgroundColor: categoryColors[transaction.category] || "#ddd", color: "#000" }}>
                                     {transaction.category}
                                 </span>
                                 <span className={`${transaction.type === "income" ? "text-green-600" : "text-red-500"} font-semibold`}>
                                     {transaction.type === "income" ? "+" : "-"}${transaction.amount.toFixed(2)}
                                 </span>
                             </div>
-                            <span className="text-black text-sm">
-                                {new Date(transaction.timestamp?.seconds * 1000).toLocaleString()}
-                            </span>
+                            <div className="flex gap-2 items-center">
+                                <span className="text-black text-sm">{new Date(transaction.timestamp?.seconds * 1000).toLocaleString()}</span>
+                                <button onClick={() => handleEdit(transaction)} className="text-sm text-blue-600 hover:underline">Edit</button>
+                                <button onClick={() => handleDelete(transaction.id)} className="text-sm text-red-600 hover:underline">Delete</button>
+                            </div>
                         </div>
                     ))}
                 </div>
-                <button
-                    onClick={() => router.push("/transactions")}
-                    className="mt-4 text-green-700 hover:underline"
-                >
+                <button onClick={() => router.push("/transactions")} className="mt-4 text-green-700 hover:underline">
                     See all transactions →
                 </button>
             </div>
