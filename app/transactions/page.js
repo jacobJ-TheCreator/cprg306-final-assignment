@@ -11,6 +11,7 @@ import {
     orderBy,
     deleteDoc,
     doc,
+    updateDoc,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
@@ -26,10 +27,18 @@ const categoryColors = {
     "Gas": "#fb923c",
 };
 
+const incomeCategories = ["Job", "Investments", "Tax refunds", "MISC"];
+const expenseCategories = ["Mortgage/Rent", "Groceries", "Entertainment", "Insurance", "Gas", "MISC"];
+
 export default function TransactionsPage() {
     const { user } = useUserAuth();
     const router = useRouter();
     const [transactions, setTransactions] = useState([]);
+    const [showIncomeForm, setShowIncomeForm] = useState(false);
+    const [showExpenseForm, setShowExpenseForm] = useState(false);
+    const [amount, setAmount] = useState("");
+    const [category, setCategory] = useState("");
+    const [editingTransaction, setEditingTransaction] = useState(null);
 
     useEffect(() => {
         if (!user) {
@@ -60,6 +69,47 @@ export default function TransactionsPage() {
         }
     };
 
+    const handleEdit = (transaction) => {
+        setEditingTransaction(transaction);
+        setAmount(transaction.amount);
+        setCategory(transaction.category);
+        if (transaction.type === "income") {
+            setShowIncomeForm(true);
+            setShowExpenseForm(false);
+        } else {
+            setShowExpenseForm(true);
+            setShowIncomeForm(false);
+        }
+    };
+
+    const handleAddOrUpdate = async (type) => {
+            if (!amount || !category) return;
+    
+            if (editingTransaction) {
+                const docRef = doc(db, "transactions", editingTransaction.id);
+                await updateDoc(docRef, {
+                    amount: parseFloat(amount),
+                    category,
+                    timestamp: new Date(),
+                });
+            } else {
+                await addDoc(collection(db, "transactions"), {
+                    userId: user.uid,
+                    type,
+                    amount: parseFloat(amount),
+                    category,
+                    timestamp: new Date(),
+                });
+            }
+    
+            setAmount("");
+            setCategory("");
+            setShowIncomeForm(false);
+            setShowExpenseForm(false);
+            setEditingTransaction(null);
+            fetchTransactions();
+        };
+
     return (
         <main className="min-h-screen bg-gradient-to-b from-green-50 to-white p-6">
             <div className="flex justify-between items-center mb-6">
@@ -71,6 +121,24 @@ export default function TransactionsPage() {
                     ← Back to Dashboard
                 </button>
             </div>
+
+            {(showIncomeForm || showExpenseForm) && (
+                <div className="bg-white p-6 rounded shadow mb-8">
+                    <h3 className="text-lg font-semibold mb-4">
+                        {editingTransaction ? "Edit Transaction" : showIncomeForm ? "Add Income" : "Add Expense"}
+                    </h3>
+                    <input type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} className="border p-2 rounded mb-4 w-full" />
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="border p-2 rounded mb-4 w-full">
+                        <option value="">Select Category</option>
+                        {(showIncomeForm ? incomeCategories : expenseCategories).map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                    <button onClick={() => handleAddOrUpdate(showIncomeForm ? "income" : "expense")} className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 w-full">
+                        {editingTransaction ? "Update" : "Submit"}
+                    </button>
+                </div>
+            )}
 
             <div className="bg-white p-6 rounded shadow space-y-4">
                 {transactions.length === 0 ? (
