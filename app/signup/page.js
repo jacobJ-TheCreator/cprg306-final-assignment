@@ -35,9 +35,9 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-green-50 to-green-100">
-      <div className="w-full max-w-md space-y-6">
-        <h1 className="text-4xl font-bold text-green-800 text-center">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-green-100 p-6">
+      <div className="bg-white w-full max-w-md rounded-xl shadow-lg p-8">
+        <h1 className="text-4xl font-bold text-green-800 text-center mb-6">
           Create Your Account
         </h1>
 
@@ -49,7 +49,7 @@ export default function SignUpPage() {
             value={formData.firstName}
             onChange={handleChange}
             required
-            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
           />
           <input
             type="text"
@@ -58,7 +58,7 @@ export default function SignUpPage() {
             value={formData.lastName}
             onChange={handleChange}
             required
-            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
           />
           <input
             type="text"
@@ -67,7 +67,7 @@ export default function SignUpPage() {
             value={formData.phone}
             onChange={handleChange}
             required
-            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
           />
           <input
             type="email"
@@ -76,7 +76,7 @@ export default function SignUpPage() {
             value={formData.email}
             onChange={handleChange}
             required
-            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
           />
           <input
             type="password"
@@ -85,7 +85,7 @@ export default function SignUpPage() {
             value={formData.password}
             onChange={handleChange}
             required
-            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
           />
           <button
             type="submit"
@@ -95,8 +95,7 @@ export default function SignUpPage() {
           </button>
         </form>
 
-        {/* Back to Home button under the form */}
-        <div className="text-center mt-4">
+        <div className="text-center mt-6">
           <button
             onClick={() => router.push("/")}
             className="text-sm text-green-700 hover:underline"

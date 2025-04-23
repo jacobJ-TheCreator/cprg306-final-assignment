@@ -35,7 +35,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
           />
           <input
             type="password"
@@ -43,7 +43,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="p-3 rounded border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
           />
           <button
             type="submit"
