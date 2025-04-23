@@ -1,15 +1,16 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore"; // <-- add this if using Firestore
+import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration (hardcoded for ZenBudget)
 const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  apiKey: "AIzaSyA5MGsX_GkYOT7XgmJ_PZVdI08GEfI3IZg",
+  authDomain: "zenbudget-18325.firebaseapp.com",
+  projectId: "zenbudget-18325",
+  storageBucket: "zenbudget-18325.firebasestorage.app",
+  messagingSenderId: "753258658307",
+  appId: "1:753258658307:web:b7f8e9e76a967e639bac36",
 };
 
 // Initialize Firebase
