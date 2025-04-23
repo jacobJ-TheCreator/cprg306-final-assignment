@@ -1,3 +1,7 @@
+//Authors Jacob, Noah, Jazib
+//Version 2025-04-22 
+//Description: CPRG 306- E Budget tracking app, with login and signup functionality, and a transactions page to view and manage transactions. Connected to firebase database, and deployed through vercel.
+
 "use client";
 
 import { useRouter } from "next/navigation";
